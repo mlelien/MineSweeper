@@ -1,5 +1,7 @@
 package com.example.emilylien.minesweeper;
 
+import android.util.Log;
+
 import java.util.Random;
 
 /**
@@ -22,6 +24,7 @@ public class MinesweeperModel {
     public final static short TAPPED = 1;
     public final static short FLAGGED = 2;
     public final static short FLAGGED_MINE = 3;
+    public final static short TAPPED_MINE = 4;
 
     public final static short BOARD_SIZE = 5;
 
@@ -35,50 +38,107 @@ public class MinesweeperModel {
             {FREE, FREE, FREE, FREE, FREE},
     };
 
-    private void setMines() {
-        for (int i = 0; i < NUM_MINES; i++) {
-            int[] cell = getRandomBoardCell();
-            while (board[cell[0]][cell[1]] != MINE)
-                cell = getRandomBoardCell();
+    private short[][] adjacentMinesBoard = {
+            {0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0},
+    };
 
-            board[cell[0]][cell[1]] = MINE;
+    public void setMines() {
+        Random random = new Random(System.currentTimeMillis());
+        int row = random.nextInt(5);
+        int col = random.nextInt(5);
+
+        for (int i = 0; i < NUM_MINES; i++) {
+            while (board[row][col] == MINE) {
+                row = random.nextInt(5);
+                col = random.nextInt(5);
+            }
+
+            board[row][col] = MINE;
         }
     }
 
-    public short checkMine(int x, int y) {
-        return board[x][y];
+    public boolean checkMine(int row, int col) {
+         if (board[row][col] == MINE)
+             return true;
+         return false;
     }
 
     public void setFlag(int x, int y) {
         if (board[x][y] == FLAGGED)
             board[x][y] = FREE;
+        else if (board[x][y] == MINE)
+            board[x][y] = FLAGGED_MINE;
         else if (board[x][y] == FLAGGED_MINE)
             board[x][y] = MINE;
         else if (board[x][y] == FREE)
             board[x][y] = FLAGGED;
     }
 
-    public int setTapped(int x, int y) {
-        board[x][y] = TAPPED;
+    public void setTapped(int row, int col, boolean userTapped) {
+        if (userTapped && checkMine(row, col)) {
+            board[row][col] = TAPPED_MINE;
+            return;
+        }
 
-        int mineAdjacent = 0;
+        if (row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE) return;
 
-        for (int i = x-1; i <= x+1; i++) {
-            for (int j = y-1; j < y+1; j++) {
-                if (board[i][j] == MINE)
+        board[row][col] = TAPPED;
+
+        if (adjacentsTappedOut(row, col)) return;
+
+        short mineAdjacent = 0;
+
+        for (int i = row-1; i <= row+1; i++) {
+            for (int j = col-1; j <= col+1; j++) {
+                if (i >= 0 && i < BOARD_SIZE && j >= 0 && j < BOARD_SIZE && (board[i][j] == MINE || board[i][j] == FLAGGED_MINE))
                     mineAdjacent++;
             }
         }
 
-        return mineAdjacent;
+        adjacentMinesBoard[row][col] = mineAdjacent;
+
+        if (mineAdjacent == 0) {
+            setTapped(row-1, col, false);
+            setTapped(row+1, col, false);
+            setTapped(row, col-1, false);
+            setTapped(row, col+1, false);
+        }
     }
 
-    private int[] getRandomBoardCell() {
-        Random random = new Random();
-        return new int[] {random.nextInt(NUM_MINES), random.nextInt(NUM_MINES)};
+    private boolean adjacentsTappedOut(int row, int col) {
+        for (int i = row-1; i <= row+1; i++) {
+            for (int j = col-1; j <= col+1; j++) {
+                if (i >= 0 && i < BOARD_SIZE && j >= 0 && j < BOARD_SIZE && board[i][j] != TAPPED)
+                    return false;
+            }
+        }
+
+        return true;
     }
 
-    public short getCell(int x, int y) {
-        return board[x][y];
+    public short getCell(int row, int col) {
+        return board[row][col];
+    }
+
+    public short getAdjacentMines(int row, int col) {
+        return adjacentMinesBoard[row][col];
+    }
+
+    public boolean checkWin() {
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
+                if (board[i][j] == FLAGGED)
+                    return false;
+
+                if (board[i][j] == MINE)
+                    return false;
+            }
+        }
+
+        return true;
     }
 }
