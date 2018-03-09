@@ -153,7 +153,7 @@ public class GameView extends View {
             int col = ((int) e.getX()) / (getWidth() / 5);
             int row = ((int) e.getY()) / (getHeight() / 5);
 
-            MinesweeperModel.getInstance().setTapped(row, col, true);
+            MinesweeperModel.getInstance().setTapped(row, col);
 
             invalidate();
 

@@ -78,17 +78,13 @@ public class MinesweeperModel {
             board[x][y] = FLAGGED;
     }
 
-    public void setTapped(int row, int col, boolean userTapped) {
-        if (userTapped && checkMine(row, col)) {
+    public void setTapped(int row, int col) {
+        if (checkMine(row, col)) {
             board[row][col] = TAPPED_MINE;
             return;
         }
 
-        if (row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE) return;
-
         board[row][col] = TAPPED;
-
-        if (adjacentsTappedOut(row, col)) return;
 
         short mineAdjacent = 0;
 
@@ -99,25 +95,8 @@ public class MinesweeperModel {
             }
         }
 
-        adjacentMinesBoard[row][col] = mineAdjacent;
-
-        if (mineAdjacent == 0) {
-            setTapped(row-1, col, false);
-            setTapped(row+1, col, false);
-            setTapped(row, col-1, false);
-            setTapped(row, col+1, false);
-        }
-    }
-
-    private boolean adjacentsTappedOut(int row, int col) {
-        for (int i = row-1; i <= row+1; i++) {
-            for (int j = col-1; j <= col+1; j++) {
-                if (i >= 0 && i < BOARD_SIZE && j >= 0 && j < BOARD_SIZE && board[i][j] != TAPPED)
-                    return false;
-            }
-        }
-
-        return true;
+        if (mineAdjacent > 0)
+            adjacentMinesBoard[row][col] = mineAdjacent;
     }
 
     public short getCell(int row, int col) {
@@ -139,6 +118,12 @@ public class MinesweeperModel {
             }
         }
 
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
+                if (board[i][j] == FREE)
+                    board[i][j] = TAPPED;
+            }
+        }
         return true;
     }
 }
